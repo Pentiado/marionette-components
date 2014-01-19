@@ -17,6 +17,7 @@
     initialize: (options) ->
       _.extend @, _.omit(options, 'collection')
       @filter = _.debounce(@filter, 300)
+      @filter = _.debounce(@hide, 300)
 
     onShow: ->
       @_setCSS()
@@ -37,24 +38,43 @@
 
     _select: (itemview) ->
       label = itemview.model.get('name')
-      @$target.val(label)
+      tags = @_createKeywordsString(label)
+      @$target.val(tags)
       @hide()
+
+    _createKeywordsString: (label) ->
+      return label unless @multipleWords
+      inputVal = @$target.val()
+      cursor = @_getCursorPosition()
+      lastComma = inputVal.lastIndexOf(',', cursor)
+
+      if lastComma isnt -1 then label = " #{label}"
+      inputVal.substr(0, lastComma + 1) + label + inputVal.substr(cursor)
 
 #####################################
 
     keyDown: (event) ->
+      return @hide() if [27, 188, 9].indexOf(event.keyCode) isnt -1
       switch event.keyCode
         when 38 then @move(-1)
         when 40 then @move(+1)
         when 13 then @onEnter(event)
-        when 27 then @hide()
-        when 9 then @hide()
         else @onType()
 
     onType: ->
-      keyword = @$target.val()
+      keyword = @_getCurrentKeyword()
       return @hide() unless @_isValid(keyword)
       @_filter(keyword)
+
+    _getCurrentKeyword: ->
+      inputVal = @$target.val()
+      return inputVal unless @multipleWords
+      cursor = @_getCursorPosition()
+      lastComma = inputVal.lastIndexOf(',', cursor)
+      inputVal.substr(lastComma + 1, cursor).trim()
+
+    _getCursorPosition: ->
+      @$target[0].selectionStart
 
     move: (position) ->
       current = @$el.children('.active')
