@@ -16,8 +16,7 @@
 
     initialize: (options) ->
       _.extend @, _.omit(options, 'collection')
-      @filter = _.debounce(@filter, 300)
-      @filter = _.debounce(@hide, 300)
+      @hide = _.debounce(@hide, 100)
 
     onShow: ->
       @_setCSS()
